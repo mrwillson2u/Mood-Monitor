@@ -1,4 +1,5 @@
 var noble = require('noble');
+var express = require('express');
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
@@ -70,10 +71,16 @@ noble.on('discover', function(peripheral) {
     });
   }
 });
+app.use(express.static('html'));
 
 app.get('/', function(req, res) {
   // res.send('<h1>Hello World</h1>');
-  res.sendFile(__dirname + '/index.html');
+
+  var options = {
+    root: __dirname + '/html/'
+  };
+
+  res.sendFile('index.html', options);
 });
 
 io.on('connection', function(socket) {
