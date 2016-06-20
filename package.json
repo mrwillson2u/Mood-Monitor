@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/mrwillson2u/Mood-Monitor/issues"
   },
-  "homepage": "https://github.com/mrwillson2u/Mood-Monitor#readme"
+  "homepage": "https://github.com/mrwillson2u/Mood-Monitor#readme",
+  "dependencies": {
+    "install": "^0.8.1",
+    "noble": "^1.6.0"
+  }
 }
