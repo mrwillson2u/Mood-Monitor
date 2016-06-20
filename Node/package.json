@@ -1,0 +1,19 @@
+{
+  "name": "moodmonitor_server",
+  "version": "0.1.0",
+  "description": "Collects bluetooth data from the Mood Sweater to be visualized in the browser.",
+  "main": "moodMonitor.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrwillson2u/Mood-Monitor.git"
+  },
+  "author": "Colin Willson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mrwillson2u/Mood-Monitor/issues"
+  },
+  "homepage": "https://github.com/mrwillson2u/Mood-Monitor#readme"
+}
