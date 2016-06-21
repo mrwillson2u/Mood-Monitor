@@ -2,7 +2,7 @@
 
 ## Installation
 
-1. Make sure Node.js is installed on your computer. To download, visit This site was built using [nodejs.org](https://nodejs.org).
+1. Make sure Node.js is installed on your computer. To download, visit [nodejs.org](https://nodejs.org).
 
 2. Ether clone this repository or download the zip and unzip it on your local computer.
 
