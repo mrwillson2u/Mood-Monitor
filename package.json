@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/mrwillson2u/Mood-Monitor#readme",
   "dependencies": {
+    "async": "^1.5.2",
     "express": "^4.14.0",
     "fs": "0.0.2",
     "install": "^0.8.1",
