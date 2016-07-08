@@ -20,18 +20,32 @@
     <!-- <script src="pixi.js"></script> -->
 
     <script>
+      var socket = io();
 
-      var renderer = new PIXI.autoDetectRenderer(window.innerWidth, 600,{backgroundColor : 0x000000})
+      var renderer = new PIXI.autoDetectRenderer(window.innerWidth, 1000,{backgroundColor : 0xFFFFFF})
     	document.body.appendChild(renderer.view);
 
-      var stage = new PIXI.Container(0x000000);
+      var stage = new PIXI.Container(0xFFFFFF);
+      var graph = new PIXI.Container(0xFF0000);
+      stage.addChild(graph);
 
-      var socket = io();
+      var graphWidth = window.innerWidth;
+      var graphHeight = 600;
+
+      var graphBackground = new PIXI.Graphics()
+      graphBackground.beginFill(0x000000);
+      graphBackground.drawRect(0, 0, window.innerWidth, 600);
+
+      graph.addChild(graphBackground);
 
       var graphics = new PIXI.Graphics()
 
+      graph.addChild(graphics);
+
       var points = [];
-      var pointSpacing = 10;
+      var pointSpacing = 50;
+
+      graphBackground.height = 600;
 
       animate();
 
@@ -42,35 +56,66 @@
 
       socket.on('mood data', function(msg){
         // $('#messages').append($('<li>').text(msg));
-        points.push(msg);
-        // console.log('recieved: ' + msg);
-        // console.log('length: ' + points.length + ' value: ')
+
+        function normalizeForGraph(input) {
+          return graphHeight - (input * graphHeight);
+        }
+
+        points.push([{value: msg.RAW_READING, normalized: normalizeForGraph(msg.RAW_READING/1024), color: 0xFF0000},
+          {value: msg.RAW_READING, normalized: normalizeForGraph(msg.RAW_READING/1024), color: 0x0099CC},
+          {value: msg.RAW_MOOD, normalized: normalizeForGraph(msg.RAW_MOOD), color: 0x33CC33},
+          {value: msg.SMOOTH_MOOD, normalized: normalizeForGraph(msg.SMOOTH_MOOD), color: 0xFF9900},
+          {value: msg.TOP_CAL, normalized: normalizeForGraph(msg.TOP_CAL), color: 0xFF33CC},
+          {value: msg.BOT_CAL, normalized: normalizeForGraph(msg.BOT_CAL), color: 0xFF6699}]);
+
+          // Add the text objects for all the data sets
+          for(var i = 0; i < points[points.length-1].length; i++) {
+            points[points.length-1][i].text = new PIXI.Text(points[points.length-1][i].value);
+            points[points.length-1][i].text.style = {font: '15px Arial', fill: points[points.length-1][i].color};
+            points[points.length-1][i].text.anchor.y = 0.5;
+            points[points.length-1][i].text.x = renderer.width;
+            points[points.length-1][i].text.rotation = 90 * Math.PI / 180;
+            // console.log("Num: " + points[points.length-1][i].value + "width: " + ((i > 0) ? points[points.length-1][i-1].text.width : 10));
+            points[points.length-1][i].text.y = ((i > 0) ? points[points.length-1][i-1].text.width + points[points.length-1][i-1].text.y + 10 : graphHeight + 10);
+            // points[points.length-1][i].text.y = ((i+1) * 40) + 610;
+            stage.addChild(points[points.length-1][i].text);
+          }
+
+        // console.log('length: ' + rawPoints.length + ' value: ')
+        // normalize data Values
+
         graphics.clear();
-        graphics.beginFill(0xFF0000);
 
         var pointScreenIndex = 0;
         if(points.length > renderer.width) {
           pointScreenIndex = points.length - renderer.width;
         }
 
+        // Red, Blue, Green, Orange, Purple, pink
+        // var colorArray = [0xFF0000, 0x0099CC, 0x33CC33, 0xFF9900, 0xFF33CC, 0xFF6699];
+
         for(var i = pointScreenIndex; i < points.length; i++) {
-          graphics.lineStyle(2, 0xFF0000);
 
-          // Drae lines between points
-          if( i > 0) {
-            graphics.moveTo(renderer.width - ((points.length - (i-1)) * pointSpacing), (points[i - 1] * renderer.height) / 1024);
-            graphics.lineTo(renderer.width - ((points.length - i) * pointSpacing), (points[i] * renderer.height) / 1024);
+          for(var j = 0; j < points[i].length; j++) {
+            graphics.beginFill(points[i][j].color);
+            graphics.lineStyle(2, points[i][j].color);
+
+            // Draw lines between points
+            if(i > 0) {
+              console.log("graph.height: " + graph.height);
+              graphics.moveTo(renderer.width - ((points.length - (i-1)) * pointSpacing), points[i - 1][j].normalized);
+              graphics.lineTo(renderer.width - ((points.length - i) * pointSpacing), points[i][j].normalized);
+
+            }
+
+            graphics.drawCircle(renderer.width - ((points.length - i) * pointSpacing), points[i][j].normalized, 2);
+
+            // console.log("points[i][j]: ", points[i][j]);
+            points[i][j].text.x = renderer.width - ((points.length - i) * pointSpacing);
+            // text.y = ((j+1) * 50) + 600;
+
           }
-
-          // Draw points
-          graphics.drawCircle(window.innerWidth - ((points.length - i) * pointSpacing), (points[i] * renderer.height) / 1024, 2);
-          // console.log('stage.height: ' + stage.height)
-
         }
-        stage.addChild(graphics);
-
-
-
       });
     </script>
 

@@ -139,27 +139,32 @@ noble.on('discover', function(peripheral) {
             var moodValueCharact = characteristic[0];
             var dataSet = "";
             var outputObj = {};
+            var recievingDataSet = false;
             moodValueCharact.on('data', function(data, isNotification) {
               var textChunk = decoder.write(data); // Data comes as a byte bufferm so we have to convert it to a string
 
-
-              if(textChunk.charCodeAt(0) === 0x02) {
-                // console.log("beginning found!");
+              // If we see the start byte, we'll begin recieving a new set
+              if(textChunk.charCodeAt(0) === 0x02 && !recievingDataSet) {
+                console.log("beginning found!");
+                recievingDataSet = true;
                 dataSet = textChunk.substr(2);
               }
-              else if(textChunk.indexOf(String.fromCharCode(0x03)) >= 0) {
-                // console.log("end found!");
+              // Otherwise if we see the end byte, we'll stop recieving and log the string
+              else if(textChunk.indexOf(String.fromCharCode(0x03)) >= 0 && recievingDataSet) {
+                console.log("end found!");
+                recievingDataSet = false;
                 dataSet += textChunk.substr(0, textChunk.indexOf(String.fromCharCode(0x03)));
                 // console.log("New DataSet: " + dataSet);
                 outputObj = JSON.parse(dataSet.substr(1,dataSet.length-1));
+                io.emit("mood data", outputObj);
                 console.log("outputObj: ", outputObj);
-              } else {
+              } else if (recievingDataSet){
                 dataSet += textChunk;
               }
 
 
 
-              //io.emit('mood data', data.readFloatBE(0));
+
               //fs.appendFile('save_' + datetime.getMonth() + '-' + datetime.getDay() + '-' + datetime.getYear() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds() + '.txt', data.readFloatBE(0) + ',' + datetime + '\n');
               //console.log(datetime.getMonth() + '-' + datetime.getDay() + '-' + datetime.getYear() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds());
             })
