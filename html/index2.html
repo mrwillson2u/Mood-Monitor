@@ -1,0 +1,453 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Mood Graph</title>
+    <!-- <link rel="stylesheet" type="text/css" href="style.css"> -->
+    <script src="pixi.js"></script>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <!-- <script src="pixi.js"></script> -->
+    <style>
+      body {
+        font: 13px Helvetica, Arial;
+        }
+        .button {
+          position: relative;
+          display: inline-block;
+          float: left;
+          width: 100px;
+          height: 30px;
+          color: #ffffff;
+          text-align: center;
+          line-height: 30px;
+          /*border: 1px solid #000000;*/
+        }
+        #save-data {
+          background: #ff0000;
+        }
+        #get-data {
+          background: #4682b4;
+        }
+        #register {
+          background: #4682b4;
+        }
+        #data-delay {
+          position: relative;
+          display: inline-block;
+          float: left;
+          width: 100px;
+          height: 24px;
+          font-size: 20px;
+          /*line-height: 25px;*/
+          /*color: #ffffff;*/
+          margin: 0px 10px 3px 10px;
+          -webkit-user-select: none;
+        }
+        #connection {
+          background: #4682b4;
+        }
+
+    </style>
+  </head>
+  <body>
+
+    <div id="button-bar">
+      <div id="save-data" class="button">Save Data</div>
+      <div id="get-data" class="button">Get Data</div>
+      <div id="register" class="button">Subscribe</div>
+      <form name="my-form"><input id="data-delay" type="text" value="500"></form>
+      <div id="connection" class="button">Connect</div>
+    </div>
+
+    <script>
+      var socket = io.connect('http://localhost:3000');
+
+      var renderer = new PIXI.autoDetectRenderer(window.innerWidth, 1000,{backgroundColor : 0xFFFFFF})
+    	document.body.appendChild(renderer.view);
+
+      var stage = new PIXI.Container(0xFFFFFF);
+      var graph = new PIXI.Container(0xFF0000);
+      stage.addChild(graph);
+
+      var graphWidth = window.innerWidth;
+      var graphHeight = 600;
+
+      var graphBackground = new PIXI.Graphics()
+      graphBackground.beginFill(0x000000);
+      graphBackground.drawRect(0, 0, window.innerWidth, 600);
+
+      graph.addChild(graphBackground);
+
+      var graphics = new PIXI.Graphics();
+
+      graph.addChild(graphics);
+
+      var points = [];
+      var pointSpacing = 50;
+
+      graphBackground.height = 600;
+
+
+      // $("#connection").click(transmitData());
+
+
+      function transmitData() {
+        // console.log("this: ", this);
+        // btnClick(this);
+        socket.emit("MoodCommand", {cmd: "transmit_data"});
+
+        console.log("Getting Data");
+      }
+
+      function saveData() {
+        // console.log("this: ", this);
+        // btnClick(this);
+        console.log("Saving Data (not actually)");
+      }
+
+      var registeredForEvents = false;
+      function register() {
+
+        // btnClick(this);
+
+
+
+        if(registeredForEvents){
+          socket.emit("MoodCommand", {cmd: "unregister"});
+        } else {
+          var frequVal = $("#data-delay").val();
+          console.log("value: ", frequVal);
+          socket.emit("MoodCommand", {cmd: "register", data: frequVal});
+        }
+      }
+
+      $("#save-data").click(saveData);
+      $("#get-data").click(transmitData);
+      $("#register").click(register);
+
+      socket.on('register_status', function(msg) {
+
+        registeredForEvents = msg.status;
+        console.log("registered: ", registeredForEvents);
+        // If registered, turn green, otherwise turn red
+        if(msg.status) {
+          // updateBtn(0x00cc33, "Unsubscribe")
+          $("#register").css('background', '#00cc33');
+        }
+        else {
+          console.log("`--2`");
+          // updateBtn(0xFF0000, "Subscribe")
+          $("#register").css('background', '#FF0000');
+        }
+      });
+
+      socket.on('program_exited', function(msg) {
+        // Close Window
+        window.close();
+      });
+
+      //
+      // var buttonWidth = 150;
+      // var buttonHeight = 40;
+      // buttonArray = [
+      //   {name: "Save Data", color: 0xff0000, object: new PIXI.Graphics(), action: saveData},
+      //   {name: "Get Data", color: 0x4682b4, object: new PIXI.Graphics(), action: transmitData},
+      //   {name: "Subscribe ", color: 0xff0000, object: new PIXI.Graphics(), action: register},
+      //
+      // ];
+
+      function btnUp(context) {
+        // this.width += 10;
+        // this.height += 10;
+        context.target.scale.x = 1.0;
+        context.target.scale.y = 1.0;
+      }
+
+      function btnClick(context) {
+        context.scale.x = 1.0;
+        context.scale.y = 1.0;
+        // this.width += 10;
+        // this.height += 10;
+      }
+
+
+      function btnDown(context) {
+        context.target.scale.x = 0.95;
+        context.target.scale.y = 0.95;
+        // this.width -= 10;
+        // this.height -= 10;
+      }
+
+      // for(i in buttonArray) {
+      //   buttonArray[i].container = new PIXI.Container();
+      //   stage.addChild(buttonArray[i].container);
+      //
+      //   buttonArray[i].object.interactive = true;
+      //   // buttonArray[i].object.width = 300;
+      //   // buttonArray[i].object.height = 100;
+      //
+      //   buttonArray[i].object.pivot.x = 75;
+      //   buttonArray[i].object.pivot.y = 20;
+      //   buttonArray[i].object.x = 75;
+      //   buttonArray[i].object.y = 20;
+      //   buttonArray[i].container.x = i * buttonWidth;
+      //   buttonArray[i].container.y = 600;
+      //   buttonArray[i].object.beginFill(buttonArray[i].color);
+      //   buttonArray[i].object.drawRect(0, 0, buttonWidth, buttonHeight);
+      //   buttonArray[i].text = new PIXI.Text(buttonArray[i].name);
+      //   buttonArray[i].text.style = {font: '15px Arial', fill: 0xffffff};
+      //   buttonArray[i].text.anchor.set(0.5);
+      //   buttonArray[i].text.position.x = buttonArray[i].object.position.x;
+      //   buttonArray[i].text.position.y = buttonArray[i].object.position.y;
+      //   buttonArray[i].object.addChild(buttonArray[i].text);
+      //
+      //   console.log("buttonArray[i]first: ", buttonArray[i]);
+      //   console.log("buttonArray[i]: ", i);
+      //   console.log("buttonArray[i].object: ", buttonArray[i].object);
+      //   console.log("tbeforehis: ", this);
+      //   buttonArray[i].object
+      //
+      //   // set the mousedown and touchstart callback...
+      //   .on('mousedown', btnDown)
+      //   .on('touchstart', btnDown)
+      //
+      //   // set the mouseup and touchend callback...
+      //   .on('mouseup', buttonArray[i].action.bind(buttonArray[i].object))
+      //   .on('touchend', buttonArray[i].action.bind(buttonArray[i].object))
+      //   .on('mouseupoutside', btnUp)
+      //   .on('touchendoutside', btnUp)
+      //
+      //   buttonArray[i].container.addChild(buttonArray[i].object);
+      // }
+      //
+      // var slider = new Slider(3 * buttonWidth, 600, buttonWidth * 2, buttonHeight, 0x888888, 0, 0, 1000);
+      //
+      //
+      //
+      // function updateBtn(newColor, newText) {
+      //   buttonArray[2].color = newColor
+      //   buttonArray[2].object.pivot.x = 75;
+      //   buttonArray[2].object.pivot.y = 20;
+      //   buttonArray[2].object.x = 75;
+      //   buttonArray[2].object.y = 20;
+      //   buttonArray[2].object.clear();
+      //   buttonArray[2].object.beginFill(buttonArray[2].color);
+      //   buttonArray[2].object.drawRect(0, 0, buttonWidth, buttonHeight);
+      //   buttonArray[2].name = newText;
+      //   buttonArray[2].text.setText(buttonArray[2].name);
+      //
+      // }
+
+      animate();
+
+      function animate() {
+        requestAnimationFrame( animate );
+        renderer.render(stage);
+      }
+
+      socket.on('mood data', function(msg){
+
+
+        // $('#messages').append($('<li>').text(msg));
+
+        function normalizeForGraph(input) {
+          return graphHeight - (input * graphHeight);
+        }
+
+        points.push([{value: msg.RAW_READING, normalized: normalizeForGraph(msg.RAW_READING/1024), color: 0xFF0000},
+          {value: msg.RAW_READING, normalized: normalizeForGraph(msg.RAW_READING/1024), color: 0x0099CC},
+          {value: msg.RAW_MOOD, normalized: normalizeForGraph(msg.RAW_MOOD), color: 0x33CC33},
+          {value: msg.SMOOTH_MOOD, normalized: normalizeForGraph(msg.SMOOTH_MOOD), color: 0xFF9900},
+          {value: msg.TOP_CAL, normalized: normalizeForGraph(msg.TOP_CAL), color: 0xFF33CC},
+          {value: msg.BOT_CAL, normalized: normalizeForGraph(msg.BOT_CAL), color: 0xFF6699}]);
+
+          // Add the text objects for all the data sets
+          for(var i = 0; i < points[points.length-1].length; i++) {
+            points[points.length-1][i].text = new PIXI.Text(points[points.length-1][i].value);
+            points[points.length-1][i].text.style = {font: '15px Arial', fill: points[points.length-1][i].color};
+            points[points.length-1][i].text.anchor.y = 0.5;
+            points[points.length-1][i].text.x = renderer.width;
+            points[points.length-1][i].text.rotation = 90 * Math.PI / 180;
+            // console.log("Num: " + points[points.length-1][i].value + "width: " + ((i > 0) ? points[points.length-1][i-1].text.width : 10));
+            points[points.length-1][i].text.y = ((i > 0) ? points[points.length-1][i-1].text.width + points[points.length-1][i-1].text.y + 10 : graphHeight + 10);
+            // points[points.length-1][i].text.y = ((i+1) * 40) + 610;
+            stage.addChild(points[points.length-1][i].text);
+          }
+
+        // normalize data Values
+
+        graphics.clear();
+
+        var pointScreenIndex = 0;
+        if(points.length > renderer.width) {
+          pointScreenIndex = points.length - renderer.width;
+        }
+
+
+        // Red, Blue, Green, Orange, Purple, pink
+        // var colorArray = [0xFF0000, 0x0099CC, 0x33CC33, 0xFF9900, 0xFF33CC, 0xFF6699];
+
+        for(var i = pointScreenIndex; i < points.length; i++) {
+
+          for(var j = 0; j < points[i].length; j++) {
+            graphics.beginFill(points[i][j].color);
+            graphics.lineStyle(2, points[i][j].color);
+
+            // Draw lines between points
+            if(i > 0) {
+              console.log("graph.height: " + graph.height);
+              graphics.moveTo(renderer.width - ((points.length - (i-1)) * pointSpacing), points[i - 1][j].normalized);
+              graphics.lineTo(renderer.width - ((points.length - i) * pointSpacing), points[i][j].normalized);
+
+            }
+
+            graphics.drawCircle(renderer.width - ((points.length - i) * pointSpacing), points[i][j].normalized, 2);
+
+            // console.log("points[i][j]: ", points[i][j]);
+            points[i][j].text.x = renderer.width - ((points.length - i) * pointSpacing);
+            // text.y = ((j+1) * 50) + 600;
+
+          }
+        }
+      });
+
+
+      function Slider(x, y, width, height, color, initialVal, minBounds, maxBounds) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.handleColor = color;
+        this.barColor = 0xccccccc;
+        this.total = maxBounds - minBounds;
+        this.value = initialVal;
+        this.minBounds = minBounds;
+        this.maxBounds = maxBounds;
+        this.barThickness = 5;
+        this.handleWidth = 10;
+        this.handleHeight = this.height * .8;
+        this.minDrag = this.handleWidth/2;
+        this.maxDrag = this.width - this.handleWidth/2;
+        this.dragWidth = this.maxDrag - this.minDrag;
+
+
+        this.container =  new PIXI.Container();
+        this.container.x = this.x;
+        this.container.y = this.y;
+
+        stage.addChild(this.container);
+
+        this.textObj = new PIXI.Text(this.value);
+        this.textObj.x = this.width;
+        this.textObj.y = 0;
+
+        this.container.addChild(this.textObj);
+
+        // Draw the bar behind the slider
+        this.sliderBar = new PIXI.Graphics();
+        this.sliderBar.position.x = this.minDrag;
+        this.sliderBar.position.y = (this.height/2) - (this.barThickness/2);
+        this.sliderBar.beginFill(this.barColor);
+        // this.sliderBar.drawRoundedRect(0 - (this.barThickness/2), 0, this.maxDrag - this.minDrag + this.barThickness, this.barThickness, this.barThickness/2);
+        this.sliderBar.drawRect(0, 0, this.maxDrag - this.minDrag, this.barThickness);
+        this.container.addChild(this.sliderBar);
+
+        // Draw the handle
+
+        this.handle = new PIXI.Graphics();
+        this.handle.pivot.set(this.handleWidth/2, this.handleHeight/2)
+        this.handle.position.x = this.minDrag;
+        this.handle.position.y = this.height/2;
+        this.handle.beginFill(this.handleColor);
+        this.handle.drawRoundedRect(0, 0, this.handleWidth, this.handleHeight, 3.5);
+        this.handle.interactive = true;
+        this.buttonMode = true;
+
+        var that = this;
+        console.log("this.handle.position.x: ", this.handle.position.x);
+        this.container.addChild(this.handle);
+
+        this.calcPos = function() {
+          var xPos = this.handle.position.x;
+          this.value = this.minBounds + ((((this.maxDrag - this.minDrag) * xPos)/this.dragWidth));
+
+        }
+
+        this.calcValue = function() {
+          console.log("this.value! ", this.value);
+          var xPos = this.handle.position.x - this.minDrag;
+          this.value = Math.round(((this.maxBounds - this.minBounds)* xPos)/this.dragWidth);
+          this.textObj.text = Math.round(this.value);
+          console.log("this.handle.position.x: ", this.handle.position.x, "this.maxDrag: ", this.maxDrag, "this.minDrag: ", this.minDrag, "this.minBounds: ", this.minBounds);
+
+          console.log("this.value! ", this.value);
+        }
+
+        // this.calcValue();
+        that.onDragStart = function(event){
+          console.log("onDragStart");
+          // store a reference to the data
+          // the reason for this is because of multitouch
+          // we want to track the movement of this particular touch
+          this.data = event.data;
+          // this.alpha = 0.5;
+          this.dragging = true;
+        }
+        that.onDragEnd = function() {
+          console.log("onDragEnd");
+          this.dragging = false;
+          that.calcValue();
+          console.log(this.value);
+
+          // set the interaction data to null
+          this.data = null;
+        }
+
+        that.onDragMove = function() {
+
+          if (this.dragging) {
+            console.log("onDragMove");
+            var newPosition = this.data.getLocalPosition(this.parent);
+            console.log("newPosition: ", newPosition, "this.minDrag: ", that.minDrag);
+            if (newPosition.x >= that.minDrag && newPosition.x <= that.maxDrag) {
+              console.log("Moving");
+              this.position.x = newPosition.x;
+            }
+            else if(newPosition.x < that.minDrag){
+              console.log("minned");
+              this.position.x = that.minDrag;
+            }
+            else if(newPosition.x > that.maxDrag){
+              console.log("Maxed");
+              this.position.x = that.maxDrag;
+            }
+            // console.log("that.calcValue(): ", that.calcValue());
+            that.calcValue();
+          }
+        }
+
+        this.handle
+        // events for drag start
+        .on('mousedown', that.onDragStart)
+        .on('touchstart', that.onDragStart)
+        // events for drag end
+        .on('mouseup', that.onDragEnd)
+        .on('mouseupoutside', that.onDragEnd)
+        .on('touchend', that.onDragEnd)
+        .on('touchendoutside', that.onDragEnd)
+        // events for drag move
+        .on('mousemove', that.onDragMove)
+        .on('touchmove', that.onDragMove);
+
+
+      }
+
+
+
+    </script>
+
+    <!-- <div id="save_button" class="ctlBtn">Save Data</div>
+    <div id="get_data" class="ctlBtn">Get Data</div> -->
+
+  </body>
+</html>
