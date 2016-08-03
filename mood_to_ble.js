@@ -47,10 +47,15 @@ noble.on('discover', function(peripheral) {
             var moodValueCharact = characteristic[0];
 
             moodValueCharact.on('read', function(data, isNotification) {
-              console.log('moodValue: ' + data.readUInt16LE(0));
-              io.emit('mood data', data.readUInt16LE(0));
-              fs.appendFile('save_' + datetime.getMonth() + '-' + datetime.getDay() + '-' + datetime.getYear() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds() + '.txt', data.readUInt16LE(0) + ',' + datetime + '\n');
-              console.log(datetime.getMonth() + '-' + datetime.getDay() + '-' + datetime.getYear() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds());
+            	var strData = data.toString('ascii');
+            	var timestamp_ms = new Date().getTime();	//time in milliseconds since jan 1, 1970
+            	console.log('Data string CSV (timstamp, smoothMood, R, G, B): ' + timestamp_ms + ',' + strData);
+            	fs.appendFile('save_' + datetime.getFullYear() + '-' + (datetime.getMonth()+1) + '-' + datetime.getDay() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds() + '.txt', timestamp_ms + ',' + strData + '\n');
+              //JJR - colin's original code:
+              //console.log('moodValue: ' + data.readUInt16LE(0));
+              //io.emit('mood data', data.readUInt16LE(0));
+              //fs.appendFile('save_' + datetime.getMonth() + '-' + datetime.getDay() + '-' + datetime.getYear() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds() + '.txt', data.readUInt16LE(0) + ',' + datetime + '\n');
+              //console.log(datetime.getMonth() + '-' + datetime.getDay() + '-' + datetime.getYear() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds());
             })
 
             moodValueCharact.notify(true, function() {
