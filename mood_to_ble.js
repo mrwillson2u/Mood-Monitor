@@ -45,12 +45,38 @@ noble.on('discover', function(peripheral) {
           services[i].discoverCharacteristics(['2221'], function(error ,characteristic) {
 
             var moodValueCharact = characteristic[0];
-
+            
+            //JJR - create a log file. Doing this here so we can write header info in the file that describes what format the CSV data is in
+						//First create logs subdirectory. NOTE: there is no mkdir -p option (i.e. create it if it doesn't already exist) for Node.js, 
+						//	so we have to just do a mkdir and then handle the error (and ignore it) if the directory already exists. 
+						var dir = 'logs/';
+						fs.mkdir( dir, 0o755, function(err) {		
+							if(err) {
+								if(err.code === 'EEXIST'); //ignore; if dir exists, then we are good.
+								else	console.log('Failed to create directory: ' + dir);	//some other error happened
+							} else ;	//directory successfully created
+						});
+						
+						//Create the log file, with headers
+						var logfilename = 'save_' + datetime.getFullYear() + '-' + (datetime.getMonth()+1) + '-' + datetime.getDate() + '_' + datetime.getHours() + '-' + datetime.getMinutes() + '-' + datetime.getSeconds() + '.txt';
+						var logfilepath = dir + logfilename;
+						fs.appendFile(logfilepath, 'Timestamp_(ms),' + 'Battery_Level_(V)' + '\n');
+						console.log('Creating log file: ' +  logfilepath);
+						
+						
             moodValueCharact.on('read', function(data, isNotification) {
             	var strData = data.toString('ascii');
             	var timestamp_ms = new Date().getTime();	//time in milliseconds since jan 1, 1970
-            	console.log('Data string CSV (timstamp, smoothMood, R, G, B): ' + timestamp_ms + ',' + strData);
-            	fs.appendFile('save_' + datetime.getFullYear() + '-' + (datetime.getMonth()+1) + '-' + datetime.getDay() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds() + '.txt', timestamp_ms + ',' + strData + '\n');
+            	
+            	//Battery level data
+            	console.log('Data string CSV ( timestamp (ms), Battery Level (V) ): ' + timestamp_ms + ',' + strData);
+            	fs.appendFile(logfilepath, timestamp_ms + ',' + strData + '\n');
+
+            	
+            	//JJR - CSV smoothMood data for Oksana
+            	//console.log('Data string CSV (timstamp, smoothMood, R, G, B): ' + timestamp_ms + ',' + strData);
+            	//fs.appendFile('save_' + datetime.getFullYear() + '-' + (datetime.getMonth()+1) + '-' + datetime.getDay() + '_' + datetime.getHours() + ':' + datetime.getMinutes() + ':' + datetime.getSeconds() + '.txt', timestamp_ms + ',' + strData + '\n');
+              
               //JJR - colin's original code:
               //console.log('moodValue: ' + data.readUInt16LE(0));
               //io.emit('mood data', data.readUInt16LE(0));
